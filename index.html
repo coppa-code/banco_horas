@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banco de Horas COPPA</title>
     
     <meta name="theme-color" content="#2E7D32">
@@ -38,6 +38,18 @@
         
         .box-coordenador { background-color: #e3f2fd; padding: 15px; border-radius: 4px; border-left: 4px solid #0277bd; margin-bottom: 20px; }
         .box-coordenador h3 { color: #0277bd; margin-top: 0; margin-bottom: 15px; font-size: 16px; text-align: left; }
+
+        /* --- AJUSTES PARA TELAS MOBILE E ZOOM --- */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; margin-bottom: 15px; }
+            .row { flex-direction: column; gap: 0; }
+            .row .form-group { min-width: 100%; margin-bottom: 15px; }
+            h1, h2 { font-size: 20px; }
+            input, select { padding: 10px; font-size: 16px; }
+            button { padding: 12px; font-size: 15px; }
+            .box-coordenador { padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -370,9 +382,6 @@
         } catch (erro) {}
     }
 
-    // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
-    // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
-    // --- CORREÇÃO 1: LISTA DROPDOWN ---
     function atualizarSelects() {
         const optionVazia = '<option value="">-- Escolha um policial --</option>';
         selectPolicial.innerHTML = optionVazia; 
@@ -381,7 +390,6 @@
         const pmServico = efetivoDinamico.filter(pm => pm.funcao === 'policial' || pm.funcao === 'ambos' || !pm.funcao);
         
         pmServico.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(pm => {
-            // Define o texto do dropdown exatamente como: "SD PM Julio"
             const optionTexto = `${pm.graduacao} ${pm.nome}`; 
             
             const opt1 = document.createElement('option'); 
@@ -396,14 +404,12 @@
         });
     }
 
-    // --- CORREÇÃO 2: PREENCHIMENTO AUTOMÁTICO ---
     selectPolicial.addEventListener('change', function() {
         const pmSelecionado = efetivoDinamico.find(pm => String(pm.matricula) === String(this.value));
         
         if (pmSelecionado) {
-            // Preenche os campos de texto travados logo abaixo
-            inputGraduacao.value = pmSelecionado.graduacao; // Aqui vai aparecer: "SD PM"
-            inputMatricula.value = pmSelecionado.matricula; // Aqui vai aparecer a matrícula do BD
+            inputGraduacao.value = pmSelecionado.graduacao; 
+            inputMatricula.value = pmSelecionado.matricula; 
         } else {
             inputGraduacao.value = ""; 
             inputMatricula.value = "";
