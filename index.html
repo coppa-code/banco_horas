@@ -372,14 +372,16 @@
 
     // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
     // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
+    // --- CORREÇÃO 1: LISTA DROPDOWN ---
     function atualizarSelects() {
         const optionVazia = '<option value="">-- Escolha um policial --</option>';
-        selectPolicial.innerHTML = optionVazia; filtroPolicial.innerHTML = optionVazia;
+        selectPolicial.innerHTML = optionVazia; 
+        filtroPolicial.innerHTML = optionVazia;
         
         const pmServico = efetivoDinamico.filter(pm => pm.funcao === 'policial' || pm.funcao === 'ambos' || !pm.funcao);
         
         pmServico.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(pm => {
-            // AQUI ESTÁ A CORREÇÃO: Junta a graduação e o nome
+            // Define o texto do dropdown exatamente como: "SD PM Julio"
             const optionTexto = `${pm.graduacao} ${pm.nome}`; 
             
             const opt1 = document.createElement('option'); 
@@ -394,16 +396,17 @@
         });
     }
 
-    // --- CORREÇÃO 2: BUSCA E PREENCHIMENTO AUTOMÁTICO CORRIGIDO ---
+    // --- CORREÇÃO 2: PREENCHIMENTO AUTOMÁTICO ---
     selectPolicial.addEventListener('change', function() {
-        // O String() garante que a busca não falhe por divergência de tipo (texto/número)
         const pmSelecionado = efetivoDinamico.find(pm => String(pm.matricula) === String(this.value));
+        
         if (pmSelecionado) {
-            // Preenche os campos debaixo instantaneamente
-            inputGraduacao.value = pmSelecionado.graduacao;
-            inputMatricula.value = pmSelecionado.matricula;
+            // Preenche os campos de texto travados logo abaixo
+            inputGraduacao.value = pmSelecionado.graduacao; // Aqui vai aparecer: "SD PM"
+            inputMatricula.value = pmSelecionado.matricula; // Aqui vai aparecer a matrícula do BD
         } else {
-            inputGraduacao.value = ""; inputMatricula.value = "";
+            inputGraduacao.value = ""; 
+            inputMatricula.value = "";
         }
     });
 
