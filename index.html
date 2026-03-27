@@ -161,7 +161,6 @@
 </div>
 
 <script type="module">
-    // Importações atualizadas, incluindo o Firebase Auth
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
     import { getDatabase, ref, push, get, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
@@ -178,7 +177,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth(app); // Inicializa a autenticação segura
+    const auth = getAuth(app); 
 
     let efetivoDinamico = []; 
     let usuarioLogadoAtual = null;
@@ -200,7 +199,6 @@
     const btnLancar = document.getElementById('btn-lancar');
     const btnEntrar = document.getElementById('btn-entrar');
 
-    // --- LÓGICA DE PREENCHIMENTO DO COORDENADOR (PUXANDO DO FIREBASE) ---
     coordGraduacao.addEventListener('change', function() {
         const gradSelecionada = this.value;
         coordMatricula.value = ""; 
@@ -248,12 +246,8 @@
         }
     });
 
-    // --- NOVO SISTEMA DE LOGIN BLINDADO (FIREBASE AUTH) ---
-    
-    // Fica escutando para ver se o usuário conectou ou desconectou
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // O Firebase confirmou que a pessoa logou com sucesso!
             if (user.email === "coordenador@coppa.com.br") {
                 usuarioLogadoAtual = { perfil: "coordenador", nome: "Módulo Coordenador de Área" };
             } else if (user.email === "supervisor@coppa.com.br") {
@@ -275,7 +269,6 @@
             carregarEfetivoDoFirebase();
             carregarRegistrosDoFirebase(); 
         } else {
-            // Usuário deslogado, mostra a tela de login
             usuarioLogadoAtual = null;
             document.getElementById('tela-sistema').classList.add('escondido');
             document.getElementById('tela-login').classList.remove('escondido');
@@ -287,7 +280,6 @@
         btnEntrar.textContent = "Entrar no Sistema";
     });
 
-    // Função engatilhada ao clicar no botão Entrar
     window.fazerLogin = async function() {
         const user = document.getElementById('login-usuario').value.toLowerCase().trim();
         const pass = document.getElementById('login-senha').value;
@@ -300,7 +292,6 @@
         btnEntrar.disabled = true;
         btnEntrar.textContent = "Verificando autorização...";
 
-        // Transforma a palavra do sistema no email que o Firebase entende
         let emailFirebase = "";
         if (user === "coordenador") {
             emailFirebase = "coordenador@coppa.com.br";
@@ -314,9 +305,7 @@
         }
 
         try {
-            // Pergunta direto pro servidor do Google se a senha bate
             await signInWithEmailAndPassword(auth, emailFirebase, pass);
-            // Se der certo, a função onAuthStateChanged lá em cima vai ativar e liberar a tela
         } catch (error) {
             alert("Senha ou usuário incorretos! Acesso negado.");
             btnEntrar.disabled = false;
@@ -326,7 +315,7 @@
 
     window.fazerLogout = async function() {
         try {
-            await signOut(auth); // Desconecta oficialmente no servidor
+            await signOut(auth); 
         } catch (error) {
             console.error("Erro ao sair", error);
         }
@@ -347,7 +336,6 @@
         }
     }
 
-    // --- DEMAIS FUNÇÕES DO SISTEMA ---
     formEfetivo.addEventListener('submit', async function(evento) {
         evento.preventDefault();
         const novoPM = {
@@ -382,6 +370,7 @@
         } catch (erro) {}
     }
 
+    // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
     function atualizarSelects() {
         const optionVazia = '<option value="">-- Escolha um policial --</option>';
         selectPolicial.innerHTML = optionVazia; filtroPolicial.innerHTML = optionVazia;
@@ -389,15 +378,34 @@
         const pmServico = efetivoDinamico.filter(pm => pm.funcao === 'policial' || pm.funcao === 'ambos' || !pm.funcao);
         
         pmServico.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(pm => {
-            const optionTexto = `${pm.graduacao} ${pm.nome} - Mat: ${pm.matricula}`;
-            const opt1 = document.createElement('option'); opt1.value = pm.matricula; opt1.textContent = optionTexto;
+            // Agora mostra apenas o Nome de Guerra no visual do dropdown
+            const optionTexto = `${pm.nome}`; 
+            
+            const opt1 = document.createElement('option'); 
+            opt1.value = pm.matricula; 
+            opt1.textContent = optionTexto;
             selectPolicial.appendChild(opt1);
-            const opt2 = document.createElement('option'); opt2.value = pm.matricula; opt2.textContent = optionTexto;
+            
+            const opt2 = document.createElement('option'); 
+            opt2.value = pm.matricula; 
+            opt2.textContent = optionTexto;
             filtroPolicial.appendChild(opt2);
         });
     }
 
-    // --- FUNÇÕES DE CÁLCULO E FORMATAÇÃO DE HORAS ---
+    // --- CORREÇÃO 2: BUSCA E PREENCHIMENTO AUTOMÁTICO CORRIGIDO ---
+    selectPolicial.addEventListener('change', function() {
+        // O String() garante que a busca não falhe por divergência de tipo (texto/número)
+        const pmSelecionado = efetivoDinamico.find(pm => String(pm.matricula) === String(this.value));
+        if (pmSelecionado) {
+            // Preenche os campos debaixo instantaneamente
+            inputGraduacao.value = pmSelecionado.graduacao;
+            inputMatricula.value = pmSelecionado.matricula;
+        } else {
+            inputGraduacao.value = ""; inputMatricula.value = "";
+        }
+    });
+
     function calcularDiferencaHoras(entrada, saida) {
         const dataEntrada = new Date(`2000-01-01T${entrada}:00`);
         let dataSaida = new Date(`2000-01-01T${saida}:00`);
@@ -426,7 +434,7 @@
         btnLancar.textContent = "Salvando...";
 
         const matricula = selectPolicial.value;
-        const pmObj = efetivoDinamico.find(pm => pm.matricula === matricula);
+        const pmObj = efetivoDinamico.find(pm => String(pm.matricula) === String(matricula));
         const dataServico = document.getElementById('input-data').value;
         const mesAno = dataServico.substring(0, 7); 
         
@@ -543,7 +551,8 @@
                     totalHoras += Number(reg.total_horas); qtd++;
                 });
             }
-            const pmObj = efetivoDinamico.find(pm => pm.matricula === matriculaBusca);
+            
+            const pmObj = efetivoDinamico.find(pm => String(pm.matricula) === String(matriculaBusca));
             
             const totalFormatado = formatarHorasParaRelogio(totalHoras);
 
