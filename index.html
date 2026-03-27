@@ -371,6 +371,7 @@
     }
 
     // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
+    // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
     function atualizarSelects() {
         const optionVazia = '<option value="">-- Escolha um policial --</option>';
         selectPolicial.innerHTML = optionVazia; filtroPolicial.innerHTML = optionVazia;
@@ -378,8 +379,8 @@
         const pmServico = efetivoDinamico.filter(pm => pm.funcao === 'policial' || pm.funcao === 'ambos' || !pm.funcao);
         
         pmServico.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(pm => {
-            // Agora mostra apenas o Nome de Guerra no visual do dropdown
-            const optionTexto = `${pm.nome}`; 
+            // AQUI ESTÁ A CORREÇÃO: Junta a graduação e o nome
+            const optionTexto = `${pm.graduacao} ${pm.nome}`; 
             
             const opt1 = document.createElement('option'); 
             opt1.value = pm.matricula; 
