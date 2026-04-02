@@ -1,410 +1,226 @@
-<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ranking Operacional - COPPA</title>
-    <style>
-        :root {
-            --verde-militar: #2C4C3B;
-            --verde-claro: #4A7055;
-            --fundo: #F4F6F4;
-            --texto: #333;
-            --alerta: #dc2626;
-            --info: #2563eb;
-        }
-        body { font-family: Arial, sans-serif; background-color: var(--fundo); color: var(--texto); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
-        header { background-color: var(--verde-militar); color: white; width: 100%; padding: 15px 0; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .container { width: 90%; max-width: 900px; margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .hidden { display: none; }
-        input, select, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background-color: var(--verde-claro); color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: var(--verde-militar); }
-        .btn-excluir { background-color: var(--alerta); padding: 5px 10px; width: auto; font-size: 0.8em; margin: 2px; }
-        .btn-editar { background-color: var(--info); padding: 5px 10px; width: auto; font-size: 0.8em; margin: 2px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85em; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: var(--verde-militar); color: white; }
-        .form-group { display: flex; gap: 10px; align-items: flex-end; }
-        .form-group div { flex: 1; }
+    <title>Banco de Horas COPPA</title>
+
+    <meta name="theme-color" content="#2E7D32">
+@@ -38,6 +38,18 @@
+
+        .box-coordenador { background-color: #e3f2fd; padding: 15px; border-radius: 4px; border-left: 4px solid #0277bd; margin-bottom: 20px; }
+        .box-coordenador h3 { color: #0277bd; margin-top: 0; margin-bottom: 15px; font-size: 16px; text-align: left; }
+
+        /* --- AJUSTES PARA TELAS MOBILE E ZOOM --- */
         @media (max-width: 600px) {
-            .form-group { flex-direction: column; align-items: stretch; gap: 0; }
+            body { padding: 10px; }
+            .container { padding: 15px; margin-bottom: 15px; }
+            .row { flex-direction: column; gap: 0; }
+            .row .form-group { min-width: 100%; margin-bottom: 15px; }
+            h1, h2 { font-size: 20px; }
+            input, select { padding: 10px; font-size: 16px; }
+            button { padding: 12px; font-size: 15px; }
+            .box-coordenador { padding: 10px; }
         }
     </style>
 </head>
 <body>
+@@ -370,9 +382,6 @@
+        } catch (erro) {}
+    }
 
-    <header>
-        <h2 id="titulo-header">Painel de Produtividade</h2>
-        <button id="btn-sair" class="hidden" style="width: auto; padding: 5px 15px; float: right; margin-right: 20px;">Sair</button>
-    </header>
+    // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
+    // --- CORREÇÃO 1: LISTA DROPDOWN LIMPA ---
+    // --- CORREÇÃO 1: LISTA DROPDOWN ---
+    function atualizarSelects() {
+        const optionVazia = '<option value="">-- Escolha um policial --</option>';
+        selectPolicial.innerHTML = optionVazia; 
+@@ -381,7 +390,6 @@
+        const pmServico = efetivoDinamico.filter(pm => pm.funcao === 'policial' || pm.funcao === 'ambos' || !pm.funcao);
 
-    <div id="tela-login" class="container">
-        <h3>Acesso ao Sistema</h3>
-        <input type="email" id="email" placeholder="E-mail">
-        <input type="password" id="senha" placeholder="Senha">
-        <button id="btn-login">Entrar</button>
-        <p id="msg-erro" style="color: red;"></p>
-    </div>
+        pmServico.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(pm => {
+            // Define o texto do dropdown exatamente como: "SD PM Julio"
+            const optionTexto = `${pm.graduacao} ${pm.nome}`; 
 
-    <div id="tela-coordenador" class="container hidden">
-        <h3>Registrar Ocorrência - <span id="span-pelotao"></span></h3>
-        
-        <div id="form-lancamento">
-            <input type="hidden" id="edit-id">
-            
-            <div class="form-group">
-                <div>
-                    <label>Tipo de Ocorrência:</label>
-                    <select id="tipo-ocorrencia">
-                        <option value="Arma de fogo">Apreensão de arma de fogo (5 pts)</option>
-                        <option value="Prisão em flagrante">Prisão em flagrante (4 pts)</option>
-                        <option value="TCO Lavrado">TCO Lavrado (3 pts)</option>
-                        <option value="Apreensão de animais">Apreensão de animais (2 pts)</option>
-                        <option value="Resgate ou Captura">Resgate ou Captura (1 pt)</option>
-                    </select>
-                </div>
-                <div style="flex: 0.3;">
-                    <label>Qtd:</label>
-                    <input type="number" id="quantidade" min="1" value="1">
-                </div>
-                <div>
-                    <label>Data e Hora da Ocorrência:</label>
-                    <input type="datetime-local" id="data-ocorrencia">
-                </div>
-            </div>
-            
-            <button id="btn-lancar">Salvar Lançamento</button>
-            <button id="btn-cancelar-edit" class="hidden" style="background-color: #666;">Cancelar Edição</button>
-            <p id="msg-sucesso" style="text-align: center; font-weight: bold; color: green;"></p>
-        </div>
+            const opt1 = document.createElement('option'); 
+@@ -396,178 +404,176 @@
+        });
+    }
 
-        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
+    // --- CORREÇÃO 2: PREENCHIMENTO AUTOMÁTICO ---
+    selectPolicial.addEventListener('change', function() {
+        const pmSelecionado = efetivoDinamico.find(pm => String(pm.matricula) === String(this.value));
 
-        <h4>Histórico de Lançamentos</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Data do Fato</th>
-                    <th>Ocorrência</th>
-                    <th>Qtd</th>
-                    <th>Pts</th>
-                    <th>Ações (Janela 48h)</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-meus-lancamentos"></tbody>
-        </table>
-    </div>
+        if (pmSelecionado) {
+            // Preenche os campos de texto travados logo abaixo
+            inputGraduacao.value = pmSelecionado.graduacao; // Aqui vai aparecer: "SD PM"
+            inputMatricula.value = pmSelecionado.matricula; // Aqui vai aparecer a matrícula do BD
+            inputGraduacao.value = pmSelecionado.graduacao; 
+            inputMatricula.value = pmSelecionado.matricula; 
+        } else {
+            inputGraduacao.value = ""; 
+            inputMatricula.value = "";
+        }
+    });
 
-    <div id="tela-supervisor" class="container hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3>Ranking Mensal</h3>
-            <div>
-                <label style="font-size: 0.9em; font-weight: bold;">Mês:</label>
-                <input type="month" id="filtro-mes" style="width: auto; margin: 0;">
-            </div>
-        </div>
-        <table id="tabela-ranking-geral">
-            <thead>
-                <tr>
-                    <th>Posição</th>
-                    <th>Pelotão</th>
-                    <th>Pontuação Total</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-ranking"></tbody>
-        </table>
+    function calcularDiferencaHoras(entrada, saida) {
+        const dataEntrada = new Date(`2000-01-01T${entrada}:00`);
+        let dataSaida = new Date(`2000-01-01T${saida}:00`);
+        if (dataSaida < dataEntrada) { dataSaida.setDate(dataSaida.getDate() + 1); }
+        return (dataSaida - dataEntrada) / (1000 * 60 * 60);
+    }
 
-        <hr style="margin: 40px 0 20px 0; border: 0; border-top: 2px solid var(--verde-militar);">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <h3 style="margin: 0;">Detalhamento de Lançamentos</h3>
-            <div style="margin-top: 10px;">
-                <label style="font-size: 0.9em; font-weight: bold;">Filtrar Pelotão:</label>
-                <select id="filtro-pelotao-supervisor" style="width: auto; margin: 0;">
-                    <option value="todos">Todos os Pelotões</option>
-                    <option value="1">Pelotão 1</option>
-                    <option value="2">Pelotão 2</option>
-                    <option value="3">Pelotão 3</option>
-                    <option value="4">Pelotão 4</option>
-                    <option value="5">Pelotão 5</option>
-                    <option value="6">Pelotão 6</option>
-                </select>
-            </div>
-        </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Pelotão</th>
-                    <th>Data do Fato</th>
-                    <th>Ocorrência</th>
-                    <th>Qtd</th>
-                    <th>Pts</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-detalhes-supervisor">
-                </tbody>
-        </table>
-    </div>
+    function formatarHorasParaRelogio(horasDecimais) {
+        let horas = Math.floor(horasDecimais);
+        let minutos = Math.round((horasDecimais - horas) * 60);
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        if (minutos === 60) {
+            horas += 1;
+            minutos = 0;
+        }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAlQ9P_dR-aJsa6qjbJQutDWyf_uBkI0js",
-            authDomain: "produtividade-53664.firebaseapp.com",
-            projectId: "produtividade-53664",
-            storageBucket: "produtividade-53664.firebasestorage.app",
-            messagingSenderId: "246897514515",
-            appId: "1:246897514515:web:011204171fc004549d47e6"
+        const horaStr = horas.toString().padStart(2, '0');
+        const minStr = minutos.toString().padStart(2, '0');
+
+        return `${horaStr}:${minStr}`;
+    }
+
+    formLancamento.addEventListener('submit', async function(evento) {
+        evento.preventDefault();
+        btnLancar.disabled = true;
+        btnLancar.textContent = "Salvando...";
+
+        const matricula = selectPolicial.value;
+        const pmObj = efetivoDinamico.find(pm => String(pm.matricula) === String(matricula));
+        const dataServico = document.getElementById('input-data').value;
+        const mesAno = dataServico.substring(0, 7); 
+
+        const assinaturaFormatada = `${coordGraduacao.value} ${coordNome.value} (Mat: ${coordMatricula.value})`;
+
+        const novoRegistro = {
+            matricula: matricula,
+            graduacao: pmObj.graduacao,
+            nome_pm: pmObj.nome,
+            data_servico: dataServico,
+            mes_ano: mesAno, 
+            hora_entrada: document.getElementById('input-entrada').value,
+            hora_saida: document.getElementById('input-saida').value,
+            total_horas: calcularDiferencaHoras(document.getElementById('input-entrada').value, document.getElementById('input-saida').value),
+            responsavel_lancamento: assinaturaFormatada,
+            criado_em: new Date().toISOString()
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        try {
+            await push(ref(db, 'registros_servico'), novoRegistro);
 
-        const pesos = { "Arma de fogo": 5, "Prisão em flagrante": 4, "TCO Lavrado": 3, "Apreensão de animais": 2, "Resgate ou Captura": 1 };
-        let dadosUsuarioAtual = null;
+            document.getElementById('input-data').value = "";
+            document.getElementById('input-entrada').value = "";
+            document.getElementById('input-saida').value = "";
 
-        const hoje = new Date();
-        const timezoneOffset = hoje.getTimezoneOffset() * 60000;
-        const dataLocal = new Date(hoje.getTime() - timezoneOffset).toISOString();
-        
-        document.getElementById('filtro-mes').value = dataLocal.substring(0, 7);
-        document.getElementById('data-ocorrencia').value = dataLocal.substring(0, 16);
-
-        // Autenticação
-        document.getElementById('btn-login').addEventListener('click', async () => {
-            document.getElementById('msg-erro').innerText = "Autenticando...";
-            try {
-                await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('senha').value);
-                document.getElementById('msg-erro').innerText = "";
-            } catch (error) { 
-                document.getElementById('msg-erro').innerText = "E-mail ou senha incorretos."; 
-            }
-        });
-
-        document.getElementById('btn-sair').addEventListener('click', () => signOut(auth));
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                document.getElementById('tela-login').classList.add('hidden');
-                document.getElementById('btn-sair').classList.remove('hidden');
-                
-                const docSnap = await getDoc(doc(db, "usuarios", user.uid));
-                
-                if (docSnap.exists()) {
-                    dadosUsuarioAtual = docSnap.data();
-                    if (dadosUsuarioAtual.cargo === "coordenador") {
-                        document.getElementById('tela-coordenador').classList.remove('hidden');
-                        document.getElementById('span-pelotao').innerText = "Pelotão " + dadosUsuarioAtual.pelotao;
-                        carregarMeusLancamentos();
-                    } else {
-                        document.getElementById('tela-supervisor').classList.remove('hidden');
-                        carregarDadosSupervisor(); // Carrega Ranking E Detalhes
-                    }
-                }
-            } else {
-                document.getElementById('tela-login').classList.remove('hidden');
-                document.getElementById('tela-coordenador').classList.add('hidden');
-                document.getElementById('tela-supervisor').classList.add('hidden');
-                document.getElementById('btn-sair').classList.add('hidden');
-                dadosUsuarioAtual = null;
-                document.getElementById('email').value = "";
-                document.getElementById('senha').value = "";
-            }
-        });
-
-        // Lógica de Salvar Lançamento
-        document.getElementById('btn-lancar').addEventListener('click', async () => {
-            const id = document.getElementById('edit-id').value;
-            const tipo = document.getElementById('tipo-ocorrencia').value;
-            const qtd = parseInt(document.getElementById('quantidade').value);
-            const dataFato = document.getElementById('data-ocorrencia').value;
-            
-            if(!dataFato) return alert("Preencha a data e hora.");
-
-            const pontos = qtd * pesos[tipo];
-            const dataSistema = new Date().toISOString();
-            
-            const payload = {
-                id_coordenador: auth.currentUser.uid,
-                pelotao: dadosUsuarioAtual.pelotao,
-                tipo_ocorrencia: tipo,
-                quantidade: qtd,
-                pontos_totais: pontos,
-                data_fato: dataFato, 
-                data_registro_sistema: id ? undefined : dataSistema
-            };
-
-            if(id) delete payload.data_registro_sistema;
-
-            try {
-                if (id) {
-                    await updateDoc(doc(db, "lancamentos", id), payload);
-                    document.getElementById('msg-sucesso').innerText = "Registro atualizado com sucesso!";
-                } else {
-                    await addDoc(collection(db, "lancamentos"), payload);
-                    document.getElementById('msg-sucesso').innerText = "Ocorrência lançada com sucesso!";
-                }
-                limparFormulario();
-                carregarMeusLancamentos();
-                setTimeout(() => document.getElementById('msg-sucesso').innerText = "", 3000);
-            } catch (e) { alert("Erro ao salvar. Verifique sua conexão."); }
-        });
-
-        function limparFormulario() {
-            document.getElementById('edit-id').value = "";
-            document.getElementById('quantidade').value = 1;
-            document.getElementById('btn-lancar').innerText = "Salvar Lançamento";
-            document.getElementById('btn-cancelar-edit').classList.add('hidden');
-            const localDate = new Date(new Date().getTime() - timezoneOffset).toISOString().substring(0, 16);
-            document.getElementById('data-ocorrencia').value = localDate;
+            alert("Lançamento assinado e salvo!");
+            carregarRegistrosDoFirebase(); 
+        } catch (erro) {
+            alert("Erro ao salvar.");
+        } finally {
+            btnLancar.disabled = false; btnLancar.textContent = "Lançar Horas e Assinar";
         }
+    });
 
-        document.getElementById('btn-cancelar-edit').addEventListener('click', limparFormulario);
+    async function carregarRegistrosDoFirebase() {
+        listaRegistros.innerHTML = '<p style="text-align: center; color: #666;">Buscando registros...</p>';
+        try {
+            const snapshot = await get(ref(db, 'registros_servico'));
+            listaRegistros.innerHTML = "";
 
-        // Funções da Tabela do Coordenador
-        async function carregarMeusLancamentos() {
-            const q = query(collection(db, "lancamentos"));
-            const snap = await getDocs(q);
-            const tbody = document.getElementById('tabela-meus-lancamentos');
-            tbody.innerHTML = "";
-            
-            const agora = new Date();
-            const limite48h = 48 * 60 * 60 * 1000;
-            let lista = [];
-            
-            snap.forEach(d => { 
-                if(d.data().pelotao === dadosUsuarioAtual.pelotao) {
-                    lista.push({id: d.id, ...d.data()}); 
+            if (!snapshot.exists()) {
+                listaRegistros.innerHTML = '<p style="color: #666; font-style: italic; text-align: center;">Nenhum serviço lançado ainda.</p>';
+                return;
+            }
+
+            const dados = snapshot.val();
+            const registros = [];
+            for (let idNoFirebase in dados) {
+                let reg = dados[idNoFirebase];
+                reg.id_firebase = idNoFirebase;
+                registros.push(reg);
+            }
+
+            registros.reverse().forEach(reg => {
+                const dataFormatada = reg.data_servico.split('-').reverse().join('/');
+                const responsavel = reg.responsavel_lancamento ? reg.responsavel_lancamento : "Não identificado";
+
+                const tempoCriacao = new Date(reg.criado_em).getTime();
+                const tempoAtual = Date.now();
+                const dezMinutosEmMilissegundos = 10 * 60 * 1000;
+                const diferencaTempo = tempoAtual - tempoCriacao;
+
+                let htmlBotaoExcluir = "";
+
+                if (usuarioLogadoAtual && (usuarioLogadoAtual.perfil === "supervisor" || (usuarioLogadoAtual.perfil === "coordenador" && diferencaTempo <= dezMinutosEmMilissegundos))) {
+                    htmlBotaoExcluir = `<button class="btn-excluir" onclick="apagarLancamento('${reg.id_firebase}')">Excluir</button>`;
                 }
-            });
-            
-            lista.sort((a, b) => new Date(b.data_fato) - new Date(a.data_fato));
 
-            lista.forEach(item => {
-                const diff = agora - new Date(item.data_registro_sistema);
-                const podeEditar = diff <= limite48h;
-                const dataFormatada = new Date(item.data_fato).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
-                
-                // Os botões agora usam data-id para evitar erros de leitura do navegador
-                const botoes = podeEditar ? 
-                    `<button class="btn-editar" data-id="${item.id}">Editar</button>
-                     <button class="btn-excluir" data-id="${item.id}">Excluir</button>` 
-                    : '<span>Bloqueado (48h)</span>';
+                const horasExibicao = formatarHorasParaRelogio(Number(reg.total_horas));
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${dataFormatada}</td>
-                        <td>${item.tipo_ocorrencia}</td>
-                        <td>${item.quantidade}</td>
-                        <td>${item.pontos_totais}</td>
-                        <td>${botoes}</td>
-                    </tr>
+                const div = document.createElement('div');
+                div.className = 'registro-card';
+                div.innerHTML = `
+                    <div class="registro-info">
+                        <strong>${reg.graduacao} ${reg.nome_pm}</strong><br>
+                        Data: ${dataFormatada} | Turno: ${reg.hora_entrada} às ${reg.hora_saida}<br>
+                        <strong>Carga: <span style="color: #d32f2f;">${horasExibicao}</span></strong>
+                        <span class="assinatura-resp">✍️ Resp: ${responsavel}</span>
+                    </div>
+                    ${htmlBotaoExcluir}
                 `;
+                listaRegistros.appendChild(div);
             });
+        } catch (erro) {
+            listaRegistros.innerHTML = '<p style="color: red; text-align: center;">Erro ao carregar histórico.</p>';
         }
+    }
 
-        // NOVO: Método robusto para detectar cliques nos botões Editar e Excluir
-        document.getElementById('tabela-meus-lancamentos').addEventListener('click', async (e) => {
-            if (e.target.classList.contains('btn-excluir')) {
-                const id = e.target.getAttribute('data-id');
-                if(confirm("Deseja realmente excluir este registro de produtividade?")) {
-                    try {
-                        await deleteDoc(doc(db, "lancamentos", id));
-                        carregarMeusLancamentos();
-                    } catch (erro) {
-                        alert("Erro ao excluir: " + erro.message);
-                    }
-                }
-            } else if (e.target.classList.contains('btn-editar')) {
-                const id = e.target.getAttribute('data-id');
-                try {
-                    const d = await getDoc(doc(db, "lancamentos", id));
-                    if (d.exists()) {
-                        const data = d.data();
-                        document.getElementById('edit-id').value = id;
-                        document.getElementById('tipo-ocorrencia').value = data.tipo_ocorrencia;
-                        document.getElementById('quantidade').value = data.quantidade;
-                        document.getElementById('data-ocorrencia').value = data.data_fato;
-                        document.getElementById('btn-lancar').innerText = "Atualizar Lançamento";
-                        document.getElementById('btn-cancelar-edit').classList.remove('hidden');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                } catch (erro) {
-                    alert("Erro ao carregar dados para edição.");
-                }
+    window.apagarLancamento = async function(idFirebase) {
+        if(confirm("Tem certeza que deseja apagar este lançamento?")) {
+            try {
+                await remove(ref(db, `registros_servico/${idFirebase}`));
+                carregarRegistrosDoFirebase(); 
+            } catch (erro) {
+                alert("Erro ao apagar o registro.");
             }
-        });
+        }
+    };
 
+    window.buscarRelatorio = async function() {
+        const matriculaBusca = filtroPolicial.value;
+        const mesAnoBusca = document.getElementById('filtro-mes').value;
+        if (!matriculaBusca || !mesAnoBusca) { alert("Selecione o policial e o mês."); return; }
+        const boxResultado = document.getElementById('resultado-horas');
+        boxResultado.style.display = "block"; boxResultado.innerHTML = "Calculando horas...";
 
-        // Funções do Supervisor (Ranking + Detalhes)
-        async function carregarDadosSupervisor() {
-            const mesRef = document.getElementById('filtro-mes').value; // Ex: 2026-04
-            const pelotaoFiltro = document.getElementById('filtro-pelotao-supervisor').value;
-            
-            const snap = await getDocs(query(collection(db, "lancamentos")));
-            
-            let scores = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0 };
-            let listaDetalhes = [];
-
-            snap.forEach(d => {
-                const data = d.data();
-                if(data.data_fato && data.data_fato.startsWith(mesRef)) {
-                    // Soma para o Ranking Geral
-                    scores[data.pelotao] += data.pontos_totais;
-                    
-                    // Separa para a tabela de detalhes
-                    if(pelotaoFiltro === "todos" || data.pelotao === pelotaoFiltro) {
-                        listaDetalhes.push(data);
-                    }
-                }
-            });
-
-            // 1. Renderiza o Ranking
-            const rank = Object.keys(scores).map(p => ({ p, pts: scores[p] })).sort((a,b) => b.pts - a.pts);
-            const tbodyRanking = document.getElementById('tabela-ranking');
-            tbodyRanking.innerHTML = "";
-            rank.forEach((item, i) => {
-                tbodyRanking.innerHTML += `
-                    <tr>
-                        <td>${i + 1}º</td>
-                        <td>Pelotão ${item.p}</td>
-                        <td style="font-size: 1.1em; color: var(--verde-militar);"><strong>${item.pts} pts</strong></td>
-                    </tr>`;
-            });
-
-            // 2. Renderiza a Tabela de Detalhes
-            listaDetalhes.sort((a, b) => new Date(b.data_fato) - new Date(a.data_fato)); // Mais recentes primeiro
-            const tbodyDetalhes = document.getElementById('tabela-detalhes-supervisor');
-            tbodyDetalhes.innerHTML = "";
-            
-            if(listaDetalhes.length === 0) {
-                tbodyDetalhes.innerHTML = `<tr><td colspan="5">Nenhum lançamento encontrado para este filtro.</td></tr>`;
-            } else {
-                listaDetalhes.forEach(item => {
-                    const dataF = new Date(item.data_fato).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' });
-                    tbodyDetalhes.innerHTML += `
-                        <tr>
-                            <td><strong>${item.pelotao}</strong></td>
-                            <td>${dataF}</td>
-                            <td>${item.tipo_ocorrencia}</td>
-                            <td>${item.quantidade}</td>
-                            <td>${item.pontos_totais}</td>
-                        </tr>
-                    `;
+        try {
+            const q = query(ref(db, 'registros_servico'), orderByChild('matricula'), equalTo(matriculaBusca));
+            const snapshot = await get(q);
+            let totalHoras = 0; let qtd = 0;
+            if (snapshot.exists()) {
+                const registros = Object.values(snapshot.val());
+                registros.filter(reg => reg.mes_ano === mesAnoBusca).forEach((reg) => {
+                    totalHoras += Number(reg.total_horas); qtd++;
                 });
             }
-        }
 
-        // Gatilhos de atualização do Supervisor
-        document.getElementById('filtro-mes').addEventListener('change', carregarDadosSupervisor);
-        document.getElementById('filtro-pelotao-supervisor').addEventListener('change', carregarDadosSupervisor);
-        
-    </script>
+            const pmObj = efetivoDinamico.find(pm => String(pm.matricula) === String(matriculaBusca));
+
+            const totalFormatado = formatarHorasParaRelogio(totalHoras);
+
+            boxResultado.innerHTML = `
+                <strong>${pmObj.graduacao} ${pmObj.nome}</strong><br>
+                Mês: ${mesAnoBusca.split('-').reverse().join('/')}<br><br>
+                <strong>Total Trabalhado: <span style="font-size: 24px; color: #d32f2f;">${totalFormatado} horas</span></strong><br>
+                <span style="font-size: 14px; color: #666;">Em ${qtd} plantão(ões) encontrado(s)</span>
+            `;
+        } catch (erro) { boxResultado.innerHTML = '<span style="color: red;">Erro no servidor.</span>'; }
+    };
+</script>
 </body>
 </html>
